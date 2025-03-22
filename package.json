@@ -1,0 +1,19 @@
+{
+  "name": "saturation",
+  "version": "1.0.0",
+  "description": "increase saturation of input img",
+  "main": "docs/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shuri2060/saturation.git"
+  },
+  "author": "Shuri2060",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Shuri2060/saturation/issues"
+  },
+  "homepage": "https://github.com/Shuri2060/saturation#readme"
+}

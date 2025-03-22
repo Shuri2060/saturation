@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-color" content="#000000"/>
+    <meta name="description" content="Adjust Saturation"/>
+    
+    <title>Adjust Saturation</title>
+
+    <style>
+        body { 
+            background-color: black; 
+            color: white; 
+            font-family: monospace; 
+            font-size: 1.5em;
+        }
+        div {
+            margin-bottom: 1em;
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 250px;
+        }
+        #imageDisplay {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1em;
+        }
+        #imageContainer, #editedContainer {
+            display: inline-block;
+            /* background-color: white; */
+        }
+        #imageContainer > img, #editedContainer > canvas {
+            display: block;
+            max-width: 1000px;
+            height: auto;
+            width: auto;
+        }
+        
+        #sliderContainer {
+            align-items: center;
+            width: auto;
+            max-width: 800px;
+        }
+        #saturationSlider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 2px;
+            background: white;
+            outline: none;
+            cursor: pointer;
+            transform: translateY(-50%);
+            margin: 0;
+        }
+        #saturationSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #saturationSlider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #saturationValue {
+            width: 80px;
+            background-color: black;
+            color: white;
+            border: 1px solid white;
+            font-family: monospace;
+            font-size: 1em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Adjust Saturation</h1>
+    <div>
+        <label for="imageUpload">Upload:</label>
+        <input id="imageUpload" type="file" accept="image/*">
+    </div>
+    <div>
+        <label for="imageUrl">From URL:</label>
+        <input id="imageUrl" type="text" placeholder="Enter image URL">
+        <button onclick="loadImageFromUrl()">Load</button>
+    </div>
+    <!-- buggy <div>
+        <label>Paste from Clipboard:</label>
+        <button onclick="pasteImageFromClipboard()">Paste</button>
+    </div> -->
+    
+    <div id="sliderContainer">
+        <input type="range" id="saturationSlider" min="0" max="10000" value="1000">
+        <input type="number" id="saturationValue" min="0" max="10000" value="1000">
+    </div>
+    <div id="imageDisplay">
+        <div id="imageContainer">
+            <img style="width: 400px; height: 400px">
+        </div>
+        <div id="editedContainer">
+            <img style="width: 400px; height: 400px">
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
+    <script>
+
+let caman = undefined
+let debounce = undefined
+
+function setImage(img) {
+    document.getElementById('imageContainer').replaceChildren(img)
+    const edited = img.cloneNode(true)
+    caman = Caman(edited, function () {})
+    document.getElementById('editedContainer').replaceChildren(edited)
+
+    const sliderValue = document.getElementById('saturationSlider').value
+    updateSaturation(sliderValue)
+}
+
+function updateSaturation(sliderValue) {
+    if (caman) {
+        clearTimeout(debounce)
+        debounce = setTimeout(() => {
+            caman.reset()
+            caman.saturation(sliderValue).render()
+        }, 50)
+    }
+}
+
+document.getElementById('imageUpload').addEventListener('change', function (event) {
+    const file = event.target.files[0]
+    if (file?.type.startsWith('image/')) {
+        const img = new Image()
+        img.onload = () => setImage(img)
+        img.src = URL.createObjectURL(file)
+    } else {
+        alert('Please upload a valid image file.')
+    }
+})
+
+function loadImageFromUrl() {
+    const url = document.getElementById('imageUrl').value
+    if (url) {
+        const img = new Image()
+        img.crossOrigin = 'Anonymous'
+        img.onload = () => setImage(img)
+        img.onerror = () => alert('Failed to load image from URL.')
+        img.src = url
+    } else {
+        alert('Please enter a valid URL.')
+    }
+}
+
+// async function pasteImageFromClipboard() {
+//     try {
+//         const permission = await navigator.permissions.query({ name: 'clipboard-read' })
+//         if (permission.state === 'granted' || permission.state === 'prompt') {
+//             const clipboardItems = await navigator.clipboard.read()
+//             const item = clipboardItems.find(item => item.types.includes('image/png') || item.types.includes('image/jpeg'))
+//             const blob = await item.getType(item.types[0])
+//             const img = new Image()
+//             img.onload = () => setImage(img)
+//             img.onerror = e => {
+//                 console.error(`Failed to load image from clipboard.`)
+//                 console.error(e)
+//                 alert(`Failed to load image from clipboard. Ensure an image is copied to clipboard`)
+//             }
+//             img.src = URL.createObjectURL(blob)
+//         } else {
+//             alert('Clipboard access denied.')
+//         }
+//     } catch (e) {
+//         console.error('Failed to paste image.')
+//         console.error(e)
+//         alert('Failed to paste image. Ensure an image is copied to clipboard.')
+//     }
+// }
+
+document.getElementById('saturationSlider').addEventListener('input', function () {
+    const sliderValue = Math.round(this.value)
+    document.getElementById('saturationValue').value = sliderValue
+    updateSaturation(sliderValue)
+})
+
+document.getElementById('saturationValue').addEventListener('input', function () {
+    let value = Math.round(parseInt(this.value, 10))
+    if (isNaN(value) || value < 0) value = 0
+    if (value > 10000) value = 10000
+    this.value = value
+    document.getElementById('saturationSlider').value = value
+    updateSaturation(value)
+})
+    </script>
+</body></html>
