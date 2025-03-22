@@ -25,7 +25,6 @@
         }
         #originalContainer, #editedContainer {
             display: inline-block;
-            background-color: white;
         }
         #canvas {
             display: block;
@@ -99,10 +98,10 @@
     </div>
     <div id="displayFlex">
         <div id="originalContainer">
-            <canvas id="originalCanvas" width='400' height='400'></canvas>
+            <canvas id="originalCanvas" width="400" height="400"></canvas>
         </div>
         <div id="editedContainer">
-            <canvas id="editedCanvas" width='400' height='400'></canvas>
+            <canvas id="editedCanvas" width="400" height="400"></canvas>
         </div>
     </div>
 
@@ -110,10 +109,8 @@
 function setImage(img) {
     for (const canvasId of ['originalCanvas', 'editedCanvas']) {
         const canvas = document.getElementById(canvasId)
-        console.debug(canvas.width, canvas.height)
         canvas.width = Math.min(img.naturalWidth, 1000)
         canvas.height = img.naturalHeight * (canvas.width / img.naturalWidth)
-        console.debug(canvas.width, canvas.height)
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
     }
 }
@@ -124,7 +121,7 @@ function updateSaturation(value) {
     clearTimeout(debounce)
     debounce = setTimeout(() => {
         editedCanvas.style.filter = `saturate(${value}%)`
-    }, 10)
+    }, 1)
 }
 
 document.getElementById('imageUpload').addEventListener('change', function (event) {
