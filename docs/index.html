@@ -15,29 +15,24 @@
             font-size: 1.5em;
         }
         div {
-            margin-bottom: 1em;
             display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
             align-items: center;
         }
         label {
             width: 250px;
         }
-        #imageDisplay {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1em;
-        }
-        #imageContainer, #editedContainer {
+        #originalContainer, #editedContainer {
             display: inline-block;
-            /* background-color: white; */
+            background-color: white;
         }
-        #imageContainer > img, #editedContainer > canvas {
+        #canvas {
             display: block;
-            max-width: 1000px;
-            height: auto;
             width: auto;
+            height: auto;
         }
-        
+
         #sliderContainer {
             align-items: center;
             width: auto;
@@ -96,44 +91,40 @@
         <label>Paste from Clipboard:</label>
         <button onclick="pasteImageFromClipboard()">Paste</button>
     </div> -->
+    <div></div>
     
     <div id="sliderContainer">
-        <input type="range" id="saturationSlider" min="0" max="10000" value="1000">
-        <input type="number" id="saturationValue" min="0" max="10000" value="1000">
+        <input type="range" id="saturationSlider" min="0" max="5000" value="1000">
+        <input type="number" id="saturationValue" min="0" max="5000"><span style="margin-left:-2em">%</span>
     </div>
-    <div id="imageDisplay">
-        <div id="imageContainer">
-            <img style="width: 400px; height: 400px">
+    <div id="displayFlex">
+        <div id="originalContainer">
+            <canvas id="originalCanvas" width='400' height='400'></canvas>
         </div>
         <div id="editedContainer">
-            <img style="width: 400px; height: 400px">
+            <canvas id="editedCanvas" width='400' height='400'></canvas>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
     <script>
-
-let caman = undefined
-let debounce = undefined
-
 function setImage(img) {
-    document.getElementById('imageContainer').replaceChildren(img)
-    const edited = img.cloneNode(true)
-    caman = Caman(edited, function () {})
-    document.getElementById('editedContainer').replaceChildren(edited)
-
-    const sliderValue = document.getElementById('saturationSlider').value
-    updateSaturation(sliderValue)
+    for (const canvasId of ['originalCanvas', 'editedCanvas']) {
+        const canvas = document.getElementById(canvasId)
+        console.debug(canvas.width, canvas.height)
+        canvas.width = Math.min(img.naturalWidth, 1000)
+        canvas.height = img.naturalHeight * (canvas.width / img.naturalWidth)
+        console.debug(canvas.width, canvas.height)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+    }
 }
 
-function updateSaturation(sliderValue) {
-    if (caman) {
-        clearTimeout(debounce)
-        debounce = setTimeout(() => {
-            caman.reset()
-            caman.saturation(sliderValue).render()
-        }, 50)
-    }
+let debounce = undefined
+const editedCanvas = document.getElementById('editedCanvas')
+function updateSaturation(value) {
+    clearTimeout(debounce)
+    debounce = setTimeout(() => {
+        editedCanvas.style.filter = `saturate(${value}%)`
+    }, 10)
 }
 
 document.getElementById('imageUpload').addEventListener('change', function (event) {
@@ -185,7 +176,8 @@ function loadImageFromUrl() {
 //     }
 // }
 
-document.getElementById('saturationSlider').addEventListener('input', function () {
+const slider = document.getElementById('saturationSlider')
+slider.addEventListener('input', function () {
     const sliderValue = Math.round(this.value)
     document.getElementById('saturationValue').value = sliderValue
     updateSaturation(sliderValue)
@@ -193,11 +185,14 @@ document.getElementById('saturationSlider').addEventListener('input', function (
 
 document.getElementById('saturationValue').addEventListener('input', function () {
     let value = Math.round(parseInt(this.value, 10))
-    if (isNaN(value) || value < 0) value = 0
-    if (value > 10000) value = 10000
+    if (isNaN(value) || value < slider.min) value = slider.min
+    if (value > slider.max) value = slider.max
     this.value = value
     document.getElementById('saturationSlider').value = value
     updateSaturation(value)
 })
+
+document.getElementById('saturationValue').value = slider.value
+updateSaturation(slider.value)
     </script>
 </body></html>
